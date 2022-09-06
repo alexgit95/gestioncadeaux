@@ -19,4 +19,6 @@ Le champ 1 est le prenom de la personne, le second est le budget max autorisé p
 
 La page utilise le stockage local, ainsi qu'une fonction d'import export permettant de sauvegarder un objet json que vous pourrez de nouveau importer plus tard, ce qui vous permet de faire perdurer les données en dehors du stockage local.
 
+Lors de la premiere utilisation, et après avoir formaté le fichier data.js, cliquer sur RAZ puis faire un refresh de la page pour afficher toutes les fonctionnalités.
+
 Aucune fonctionnalité de sauvegarde dans le cloud n'a encore été developpé.
