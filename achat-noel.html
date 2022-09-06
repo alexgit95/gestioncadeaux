@@ -69,12 +69,12 @@
 
 	class Person {
 
-		constructor(id,name,budgetmax, isTermine) {
-			this.id=id;
+		constructor(name,budgetmax) {
+			this.id=create_UUID();
 			this.name = name;
 			this.valeur=0;
 			this.budgetmax=budgetmax;
-			this.isTermine=isTermine;
+			this.isTermine=false;
 		}
 
 	}
@@ -174,7 +174,7 @@
 
 		}else{
 
-		return "<tr ><td>"+person.name+"</td><td>"+person.budgetmax+"</td><td>"+person.valeur+"</td><td><input class='btn btn-success' type='button' value='Termin&eacute;' onclick='markAsFinished("+person.id+")'></td></tr>";
+		return "<tr ><td>"+person.name+"</td><td>"+person.budgetmax+"</td><td>"+person.valeur+"</td><td><input class='btn btn-success' type='button' value='Termin&eacute;' onclick='markAsFinished(\""+person.id+"\")'></td></tr>";
 
 
 		}
