@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Gestion Cadeaux</title>
+
+    <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+<script type="text/javascript" src="data.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+    <![endif]-->
+	
+
+	
+  </head>
+  <body>
+    <h1 >Gestion des cadeaux</h1>
+	
+	
+	<hr/>
+	<h2>Liste des Personnes</h2>
+	<div id="mytable"></div>
+	<h2>Liste des Cadeaux</h2>
+	<div id="mygifts"></div>
+	 <h2>Ajout Cadeau</h2>
+	<div id="zoneajout"></div>
+	<h2>Stats</h2> 
+	
+  
+	<div id="chart_div"></div>
+	 <h2>Import/Export</h2>
+	<h3>Export</h3>
+	<div><input class="btn btn-info" type='button' value='Save & Export' onclick='export_all()'></div>
+	<div id="export"></div>
+	<h3>Import</h3>
+	<textarea class='form-control' id="contentimport"></textarea>
+	<input class="btn btn-info" type='button' value='IMPORT' onclick='import_all()'>
+	<h2>Advanced</h2>
+	<input class="btn btn-danger" type='button' value='RAZ' onclick='raz()'>
+	
+	<script>
+
+	var allPersons = [];
+	var allCadeaux=[];
+
+
+	function raz(){
+
+	if (window.confirm("Attention, toutes vos saisies seront perdues. Voulez vous vraiment RAZ?")) {
+		loadInitPers();
+		allCadeaux=[];
+		console.log(allPersons);
+		refreshTables();
+		}
+	}
+
+	class Person {
+
+		constructor(id,name,budgetmax, isTermine) {
+			this.id=id;
+			this.name = name;
+			this.valeur=0;
+			this.budgetmax=budgetmax;
+			this.isTermine=isTermine;
+		}
+
+	}
+
+	class Cadeau {
+
+		constructor(idCadeau,idPers,montant, lien) {
+			this.id=idCadeau;
+			this.idPers=idPers;
+			this.lien = lien;
+			this.montant = montant;
+			this.isBought=false;
+			
+		}
+
+	}
+
+	function saveObject(cle,objet){
+		localStorage.setItem(cle,JSON.stringify(objet));
+	}
+
+	function readObject(cle){
+		var read=localStorage.getItem(cle);
+		return JSON.parse(read);
+	}
+
+	function create_UUID(){
+		var dt = new Date().getTime();
+		var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+			var r = (dt + Math.random()*16)%16 | 0;
+			dt = Math.floor(dt/16);
+			return (c=='x' ? r :(r&0x3|0x8)).toString(16);
+		});
+		return uuid;
+	}
+
+	function addCadeau(idPers,montant,lien){
+
+		for(var i=0;i<allPersons.length;i++){
+			if(allPersons[i].id==idPers){
+				allPersons[i].valeur=parseInt(montant)+parseInt(allPersons[i].valeur);
+			}
+		}
+		allCadeaux.push(new Cadeau(create_UUID(),idPers,montant,lien));
+		
+		
+		
+
+	}
+
+
+	function markAsFinished(idPerson){
+		for(var i=0;i<allPersons.length;i++){
+			if(allPersons[i].id==idPerson){
+				allPersons[i].isTermine=true;
+			}
+		}
+		
+		refreshTables();
+
+	}
+
+
+	function markAsBought(idCadeau){
+
+		for(var i=0;i<allCadeaux.length;i++){
+			if(allCadeaux[i].id==idCadeau){
+				allCadeaux[i].isBought=true;
+			}
+		}
+		refreshTables();
+
+	}
+
+	function printPersons(){
+
+		var chaine="<table class='table'>\n";
+
+		chaine+="<tr><th>Prenom</th><th>Budget Total</th><th>Budget D&eacute;pens&eacute;</th><th>Termin&eacute;?</th></tr>\n";
+
+		for(var i=0;i<allPersons.length;i++){
+
+		chaine+=printPerson(allPersons[i])+"\n";
+		}
+
+		chaine+="</table>";
+
+		return chaine;
+
+
+	}
+
+	function printPerson(person){
+		if(person.valeur>=person.budgetmax||person.isTermine){
+
+		return "<tr class='success'><td>"+person.name+"</td><td>"+person.budgetmax+"</td><td>"+person.valeur+"</td><td></td></tr>";
+
+		}else{
+
+		return "<tr ><td>"+person.name+"</td><td>"+person.budgetmax+"</td><td>"+person.valeur+"</td><td><input class='btn btn-success' type='button' value='Termin&eacute;' onclick='markAsFinished("+person.id+")'></td></tr>";
+
+
+		}
+
+	}
+
+
+	function printGifts(){
+		var chaine="<table class='table'>\n";
+
+		chaine+="<tr><th>Personne</th><th>Montant</th><th>Lien</th><th>Achet&eacute;?</th></tr>\n";
+
+		for(var i=0;i<allCadeaux.length;i++){
+			chaine+=prinGift(allCadeaux[i]);
+
+		}
+
+
+		chaine+="</table>";
+
+		return chaine;
+
+
+	}
+
+	function prinGift(gift){
+		if(gift.isBought){
+			return "<tr class='success'><td>"+persNameById(gift.idPers)+"</td><td>"+gift.montant+"</td><td>"+gift.lien+"</td><td></td></tr>";
+		}else{
+			return "<tr ><td>"+persNameById(gift.idPers)+"</td><td>"+gift.montant+"</td><td>"+gift.lien+"</td><td><input class='btn btn-success' type='button' value='Termin&eacute;' onclick='markAsBought(\""+gift.id+"\")'></td></tr>";
+		}
+	}
+
+	function persNameById(idPers){
+
+		for(var i=0;i<allPersons.length;i++){
+			if(allPersons[i].id==idPers){
+				return allPersons[i].name;
+			}
+		}
+
+	}
+
+	function refreshTables(){
+
+		document.getElementById("mytable").innerHTML=printPersons();
+		document.getElementById("mygifts").innerHTML=printGifts();
+
+		let result= {};
+		result.persons=allPersons;
+		result.cadeaux=allCadeaux;
+
+		saveObject("sauvegarde",result);
+		//calculBudget();
+
+	}
+
+	function export_all(){
+
+		let result= {};
+		result.persons=allPersons;
+		result.cadeaux=allCadeaux;
+
+		document.getElementById("export").innerHTML=JSON.stringify(result);
+		saveObject("sauvegarde",result);
+
+	}
+
+	function import_all(){
+		var content= JSON.parse(document.getElementById("contentimport").value);
+		allPersons=content.persons;
+		allCadeaux=content.cadeaux;
+		refreshTables();
+
+	}
+
+
+	function startPage(){
+
+		let content=readObject("sauvegarde");
+		allPersons=content.persons;
+		allCadeaux=content.cadeaux;
+		refreshTables();
+		buildAdd();
+
+	}
+
+	function buildSelect(){
+		let chaine="<select class='form-select' id='idPersAddGift'>\n<option selected>Selectionner la personne</option>\n";
+		for(var i=0;i<allPersons.length;i++){
+				chaine+="<option value='"+allPersons[i].id+"'>"+allPersons[i].name+"</option>";
+			}
+			
+		chaine+="</select>";
+		return chaine;
+
+	}
+
+	function buildAdd(){
+		document.getElementById("zoneajout").innerHTML=buildSelect()+"<input type='text' class='form-control' id='montantoadd' placeholder='montant'><input type='text' class='form-control' id='linktoadd' placeholder='lien'><input class='btn btn-default' type='button' value='Ajouter' onclick='addGift()'>";
+	}
+
+	function addGift(){
+		addCadeau(document.getElementById('idPersAddGift').value,document.getElementById('montantoadd').value,document.getElementById('linktoadd').value)
+		refreshTables();
+		calculBudget();
+	}
+
+
+
+
+
+	google.charts.load('current', {packages: ['corechart', 'bar']});
+	google.setOnLoadCallback(calculBudget);
+
+	function calculBudget(){
+		let totalPrevu=0;
+		let totalEffectue=0;
+
+		for(var i=0;i<allPersons.length;i++){
+				totalEffectue+=parseInt(allPersons[i].valeur);
+				totalPrevu+=parseInt(allPersons[i].budgetmax);
+			}
+
+			var data = new google.visualization.DataTable();
+			data.addColumn('number', 'Evolution des budgets');
+			
+			data.addColumn('number', 'Effectué');
+			data.addColumn('number', 'Prévu');
+			
+			data.addRows([
+			[0,totalEffectue,totalPrevu]	
+			]);
+			var options = {}
+			var materialChart = new google.charts.Bar(document.getElementById('chart_div'));
+			materialChart.draw(data, options);
+
+	}
+
+	startPage();
+
+	</script>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    </body>
+</html>
